@@ -32,14 +32,28 @@ class Bloque:
         return contenedor #? se saco
 
     #TODO verificar_Accesibilidad -> int -> cantidad movimientos
-    def verificar_cantidad_movimientos(self, x,y,z):
-
+    def verificar_cantidad_movimientos(self, x,y,z, x_aux = -1, flag = False):
+        izquierda = 0
+        derecha = 0
         if (not self.verificar_Existencia(x,y,z)):
+            print(f'no hay nada {x, y, z, x_aux}')
             return 0
-        else:
-            izquierda = self.verificar_accesibilidad(x - 1,y,z)
-            derecha = self.verificar_accesibilidad(x + 1,y,z)
-            return 1 + self.verificar_accesibilidad(x,y,z + 1) +  izquierda if izquierda <= derecha else derecha 
+        elif (not self.verificar_Existencia(x+1,y,z) or not self.verificar_Existencia(x-1,y,z)):
+            print(f'Un lado no tiene nada {x,y,z,x_aux}')
+            return 1 + self.verificar_cantidad_movimientos(x,y,z + 1, x, True)
+        if (x_aux != x-1 and not flag):
+            print(f'avanza izquierda {x,y,z,x_aux}')
+            izquierda = self.verificar_cantidad_movimientos(x - 1,y,z, x)
+            print(f'izquierda: {izquierda}')
+        if (x_aux != x+1 and not flag):
+            print(f'avanza derecha {x,y,z,x_aux}')
+            derecha = self.verificar_cantidad_movimientos(x + 1,y,z, x)
+            print(f'derecha: {derecha}')
+        
+        print(f'fin iteracion {x,y,z,x_aux}')
+        print(f'izquierda: {izquierda}')
+        print(f'derecha: {derecha}')
+        return 1 + self.verificar_cantidad_movimientos(x,y,z + 1, x, True) + (izquierda if izquierda <= derecha else derecha)
     
     #TODO graverdad -> true/false
     def verificar_gravedad(self, x,y,z):
@@ -49,10 +63,14 @@ class Bloque:
     
     #TODO verificarExistencia
     def verificar_Existencia(self, x,y,z):
-        if(self.bloque[x,y,z]):
-            return True
-        return False
-    
+        var = False
+        try:
+            if(self.bloque[x,y,z]):
+                var = True
+        except:
+            var = False
+        return var
+
     def ver_bloque(self):
         string = ""
         for i in range(self.maximo_z):
@@ -101,4 +119,3 @@ class Bloque:
         return (f"Bloque(Bloque: {self.id_bloque}, "
                 f"Maximo X: {self.maximo_x}, Maximo Y: {self.maximo_y}, Maximo Z: {self.maximo_z}, "
                 f"Visible Dos Caras: {self.visible_dos_caras})")
-
