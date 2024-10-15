@@ -15,10 +15,10 @@ bloque = Bloque(
 )
 
 contenedor = Contenedor(
-    "AX-12", 
-    "Dry", 20, 
-    "Macaco", 
-    datetime(2024, 8, 5)
+    id_contenedor="AX-12", 
+    tipo="Dry", 
+    tamanio=20, 
+    marca="UsmAlpha", 
 )
 
 bloque.agregar_contenedor(0, 6, 0, contenedor)
