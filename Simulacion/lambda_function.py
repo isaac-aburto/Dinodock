@@ -1,5 +1,4 @@
-import Contenedor
-
+import Simulacion.Contenedor as Contenedor
 import json
 
 def lambda_handler(event, context):
@@ -9,7 +8,5 @@ def lambda_handler(event, context):
         'statusCode': 200,
         'body': json.dumps('Hello from Lambda!')
     }
-
-
 
 

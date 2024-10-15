@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from Contenedor import Contenedor
-from Bloque import Bloque
+from Simulacion.Contenedor import Contenedor
+from Simulacion.Bloque import Bloque
 from mpl_toolkits.mplot3d import Axes3D
 from datetime import datetime
 import random
