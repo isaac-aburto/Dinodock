@@ -1,5 +1,4 @@
 import numpy as np
-import Simulacion.Contenedor
 import random
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -114,7 +113,6 @@ class Bloque:
         # Mostrar la gráfica
         plt.show()
 
-
     def verificar_limites(self,y):
         try:
             for i in range(self.maximo_x):
@@ -122,7 +120,7 @@ class Bloque:
                     limite_inferior = i
                     break
 
-            for j in range(self.maximo_x,0,-1):
+            for j in range(self.maximo_x-1,-1,-1):
                 if (self.verificar_Existencia(j,y,0)):
                     limite_superior = j + (1 if (not self.visible_dos_caras) else 0)
                     break
@@ -139,6 +137,8 @@ class Bloque:
         if(self.verificar_posicion(x,y,z)):
             
             limite_inferior,limite_superior = self.verificar_limites(y)
+            if(x >= limite_superior):
+                limite_inferior,limite_superior = [limite_superior, limite_inferior]
             paso = 1 if limite_inferior < limite_superior else -1
             total_pesos = 0
             for i in range(limite_inferior, limite_superior, paso):
@@ -152,13 +152,13 @@ class Bloque:
         
         return -1
 
+    #Retornar (coordenadas para colocar contenedor), peso de la fila y promedio de dias de estadía de una marca
     def stats_fila(self):
         contador = 1
         stats = {}
         frecuencia = 0
         for i in range (self.maximo_y):
             limite_inferior, limite_superior = self.verificar_limites(i)
-            print(f"con {i}, limites {limite_inferior, limite_superior}")
             x,y,z = (int(self.maximo_x/2)),i,0
             peso_fila = 0
             if (limite_inferior!=-1 and limite_superior!=-1):
@@ -169,7 +169,6 @@ class Bloque:
                     #Verificar procedimiento para refactorizar
                     elif (not self.verificar_Existencia(limite_inferior-1,i,0)):
                         x,y,z = limite_inferior-1,i,0
-                        print(f"resta {x,y,z}")
                         try:
                             self.bloque[x,y,z]
                         except:
@@ -187,7 +186,6 @@ class Bloque:
                     #Verificar procedimiento para refactorizar
                     elif (not self.verificar_Existencia(limite_superior+1,i,0)):
                             x,y,z = limite_superior+1,i,0
-                            print(f"suma {x,y,z}")
                             try:
                                 self.bloque[x,y,z]
                             except:
@@ -201,6 +199,47 @@ class Bloque:
                 stats[contador] = [(x,y,z), peso_fila, frecuencia]
                 contador+=1
 
+        return stats
+    
+    #Retornar la cantidad de movimientos para retirar, y aplicar gravedad si aplica
+    def aplicar_gravedad_retirar_contenedor(self,x,y,z):
+        if (self.verificar_Existencia(x,y,z)):
+            cant_mov = self.verificar_cantidad_movimientos(x,y,z)
+            for i in range(z+1, self.maximo_z):
+                if (self.verificar_Existencia(x,y,i)):
+                    self.bloque[x,y,z] = self.bloque[x,y,i]
+                    self.bloque[x,y,i] = None
+            
+            self.ordenar_bloque(x,y)
+        
+        return cant_mov
+    
+    def ordenar_bloque(self,x,y):
+        for i in range(x+1, self.maximo_x):
+            if (not self.verificar_Existencia(x,y,self.maximo_z) and self.verificar_Existencia(i,y,0)):
+                for j in range(self.maximo_z-1, -1, -1):
+                    if (self.verificar_Existencia(i,y,j)):
+                        self.bloque[x,y,self.maximo_z-1] = self.bloque[i,y,j]
+
+    def ubicacion(self,id):
+        for x in range(self.bloque.shape[0]):
+            for y in range(self.bloque.shape[1]):
+                for z in range(self.bloque.shape[2]):
+                    if (self.verificar_Existencia(x,y,z)):
+                        contenedor = self.bloque[x, y, z]
+                        if (contenedor.id_contenedor == id):
+                            return [x,y,z]
+        return None  # Retorna None si no se encuentra
+
+    #Retornar Id_Contenedor, Cant Movimientos, Peso
+    def stats_contenedores_bloque(self):
+        stats = {}
+        for x in range(self.bloque.shape[0]):
+            for y in range(self.bloque.shape[1]):
+                for z in range(self.bloque.shape[2]):
+                    if (self.verificar_Existencia(x,y,z)):
+                        contenedor = self.bloque[x,y,z]
+                        stats[contenedor.id_contenedor] = [self.verificar_cantidad_movimientos(x,y,z), contenedor.diferencia_dias(), contenedor.marca]
         return stats
 
     def __repr__(self):
