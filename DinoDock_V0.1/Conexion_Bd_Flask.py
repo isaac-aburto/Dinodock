@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request 
 from Simulacion.nueva_Funcion_opty import *
 from Simulacion.Patio import Patio
 from Simulacion.Contenedor import Contenedor
@@ -7,7 +7,7 @@ import Estadisticas
 import Cargar_Datos
 import Conexion_Bd
 
-app = Flask(__name__)
+
 
 '''connectionstring = (
     "Driver={ODBC Driver 17 for SQL Server};"
@@ -20,22 +20,32 @@ app = Flask(__name__)
     "TrustServerCertificate=yes;"
 )'''
 
+app = Flask(__name__)
+
 @app.route('/hello', methods=['GET'])
-def hello(contenedor):
+def hello():
     try:
+        # Obtén los parámetros de la URL
+        id_contenedor = request.args.get('id', None)
+        tipo = request.args.get('tipo', None)
+        marca = request.args.get('marca', None)
+        tamanio = request.args.get('tamanio', None)
+
+        # Valida que los parámetros sean proporcionados
+        if not all([id_contenedor, tipo, marca, tamanio]):
+            return jsonify(error="Faltan parámetros: se requieren id, tipo, marca, y tamanio."), 400
+
         bloques = Cargar_Datos.cargar_bloques(1)
         contenedores = Cargar_Datos.cargar_contenedores(1)
         bloques = Cargar_Datos.cargar_movimientos(1, bloques, contenedores)
 
-        patio = Patio(
-            bloques = bloques
-        )
+        patio = Patio(bloques=bloques)
 
         con = Contenedor(
-            id_contenedor=contenedor.strip().split(";")[0],
-            tipo=contenedor.strip().split(";")[1],
-            marca=contenedor.strip().split(";")[2],
-            tamanio=contenedor.strip().split(";")[3]
+            id_contenedor=id_contenedor,
+            tipo=tipo,
+            marca=marca,
+            tamanio=tamanio
         )
 
         dias_permanencia = Estadisticas.promedio_dias_marca(1, con.marca)
@@ -44,20 +54,21 @@ def hello(contenedor):
         patio.bloques[id_bloque].agregar_contenedor(pos[1], pos[2], pos[3], con)
 
         conexion = Conexion_Bd.conexion_bd()
-        if (conexion):
+        if conexion:
             try:
                 cursor = conexion.cursor()
                 sql = f"INSERT INTO MOVIMIENTOS VALUES ({con.id_contenedor}, {id_bloque}, {pos[1]}, {pos[2]}, {pos[3]}, GETDATE(), 1)"
                 cursor.execute(sql)
             except Exception as e:
-                # Devolver un mensaje de error más detallado
-                return jsonify(error=f"Error: {str(e)}"), 501
+                return jsonify(error=f"Error al insertar en la base de datos: {str(e)}"), 501
 
-        return json.dumps((id_bloque, pos))
-    
+        return jsonify(id_bloque=id_bloque, posicion=pos)
+
     except Exception as e:
-        # Devolver un mensaje de error más detallado
-        return jsonify(error=f"Error: {str(e)}"), 500
+        return jsonify(error=f"Error general: {str(e)}"), 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
 
 '''@app.route('/hello', methods=['GET'])
 def hello():
@@ -99,5 +110,5 @@ def hello():
 
     return jsonify(message=json_data)'''
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+# if __name__ == '__main__':
+#     app.run(host='0.0.0.0', port=5000, debug=True)
